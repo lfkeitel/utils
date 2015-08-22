@@ -1,30 +1,38 @@
-package channels
+package sync
+
+import (
+	"sync"
+	"sync/atomic"
+)
 
 // A LimitGroup is a group used to limit the number of something. An example would be to
 // limit the number of goroutines running at the same time
 type LimitGroup struct {
-	current int
+	current int32
 	done    chan bool
-	max     int
+	max     int32
+	sync.Mutex
 }
 
-// Limit sets the maximum limit
-func (c *LimitGroup) Limit(l int) {
-	c.startDoneChannel()
+// Limit sets the maximum limit, a limit of 0 (default) indicates no limit.
+func (c *LimitGroup) Limit(l int32) {
+	c.prepare()
 	c.max = l
 }
 
 // Add adds delta number to the LimitGroup
-func (c *LimitGroup) Add(delta int) {
-	c.startDoneChannel()
-	c.current += delta
+func (c *LimitGroup) Add(delta int32) {
+	c.prepare()
+	c.Lock()
+	c.current = atomic.AddInt32(&c.current, delta)
+	c.Unlock()
 	return
 }
 
 // Done removes one from the current LimitGroup
 func (c *LimitGroup) Done() {
 	c.Add(-1)
-	if c.current < c.max {
+	if c.max == 0 || c.current < c.max {
 		select {
 		case c.done <- true:
 		default:
@@ -37,15 +45,15 @@ func (c *LimitGroup) Done() {
 // at the end of a loop that's starting goroutines to wait for an available slot
 // before starting a new one.
 func (c *LimitGroup) Wait() {
-	c.startDoneChannel()
-	if c.current < c.max {
+	c.prepare()
+	if c.max == 0 || c.current < c.max {
 		return
 	}
 	<-c.done
 	return
 }
 
-func (c *LimitGroup) startDoneChannel() {
+func (c *LimitGroup) prepare() {
 	if c.done == nil {
 		c.done = make(chan bool)
 	}
