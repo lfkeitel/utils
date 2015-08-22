@@ -1,7 +1,7 @@
 Golang Utility Functions
 ------------------------
 
-Version: 1.0.0
+Version: 0.1.0
 
 This package contains several functions that I've found useful in my programs. They're usually small little things that could trivially be implemented by just about anyone, but I'd rather not reinvent the wheel.
 
