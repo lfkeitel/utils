@@ -14,6 +14,13 @@ type LimitGroup struct {
 	sync.Mutex
 }
 
+// NewLimitGroup creates a limit group with l as the limit
+func NewLimitGroup(l int32) *LimitGroup {
+	lg := &LimitGroup{}
+	lg.Limit(l)
+	return lg
+}
+
 // Limit sets the maximum limit, a limit of 0 (default) indicates no limit.
 func (c *LimitGroup) Limit(l int32) {
 	c.prepare()
