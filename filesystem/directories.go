@@ -6,7 +6,9 @@ import (
 	"os"
 )
 
-func RemoveDir(path string) error {
+// RemoveDirContents deletes the contents of a directory including
+// all files and directories.
+func RemoveDirContents(path string) error {
 	src, err := os.Stat(path)
 	if err != nil {
 		return err
